@@ -7,6 +7,7 @@ import { GitRestClient, VersionControlRecursionType } from "azure-devops-extensi
 import { Header, TitleSize } from "azure-devops-ui/Header";
 import { IHeaderCommandBarItem } from "azure-devops-ui/HeaderCommandBar";
 import { Page } from "azure-devops-ui/Page";
+import { Spinner, SpinnerSize } from "azure-devops-ui/Spinner";
 import { Tab, TabBar, TabSize } from "azure-devops-ui/Tabs";
 import { showRootComponent } from "../../Common";
 
@@ -25,7 +26,7 @@ interface IReportContentState {
     useCompactPivots?: boolean;
     items?: ItemReport[];
     nameEnvironment?: string;
-
+    message?: string;
 }
 
 class ReportContent extends React.Component<{}, IReportContentState> {
@@ -35,7 +36,8 @@ class ReportContent extends React.Component<{}, IReportContentState> {
 
         this.state = {
             selectedTabId: "0", 
-            items: []
+            items: [],
+            message: "Loading ....."
         };
     }
 
@@ -47,54 +49,66 @@ class ReportContent extends React.Component<{}, IReportContentState> {
 
     private async initializeState(): Promise<void> {
 
-        const REPOSITORY_NAME: string = "DevOps_Vault_Reports_Extension";
-        const configuration = await SDK.getConfiguration();
-        const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
-        const project = await projectService.getProject();
-
-        if(configuration && project ){
-
-            const release = configuration.releaseEnvironment;
-            const nameEnvironment =  release.name;
-            const RELEASE_DEFINITIONID = release.releaseDefinition.id;
-            const RELEASE_RELEASEID = release.releaseId;
-            const RELEASE_DEFINITIONENVIRONMENTID = release.definitionEnvironmentId;
-            const RELEASE_ATTEMPTNUMBER = release.deploySteps.length; 
-            const path = `/${RELEASE_DEFINITIONID}/${RELEASE_RELEASEID}/${RELEASE_DEFINITIONENVIRONMENTID}/${RELEASE_ATTEMPTNUMBER}/`;
-    
-            this.setState({ nameEnvironment: nameEnvironment });
-
-            const client = getClient(GitRestClient);
-            let items = await client.getItems(REPOSITORY_NAME,project.id,path,VersionControlRecursionType.Full).then( items => {
-                
-                return items.filter(item => !item.isFolder).map(elem => {
-    
-                    let item:ItemReport = {
-                        url: elem.url,
-                        commitId: elem.commitId,
-                        path: elem.path,
-                      } ;
-    
-                    return item;
-                });
-    
-            });
-    
-            for (let index = 0; index < items.length; index++) {
-                items[index].comment = await client.getCommit(items[index].commitId as string,REPOSITORY_NAME,project.id).then( commit => commit.comment);
-                items[index].content  = await client.getItemText(REPOSITORY_NAME,items[index].path as string , project.id);
-            }
+        try {
             
-            this.setState({ items: items });
+            const REPOSITORY_NAME: string = "DevOps_Vault_Reports_Extension";
+            const idTask = "13008e5e-9195-4043-9baf-c5d70da839e3";
+            const configuration = await SDK.getConfiguration();
+            const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
+            const project = await projectService.getProject();
 
+            if(configuration && project ){
+
+                const release = configuration.releaseEnvironment;
+                const nameEnvironment =  release.name;
+                const RELEASE_DEFINITIONID = release.releaseDefinition.id;
+                const RELEASE_RELEASEID = release.releaseId;
+                const RELEASE_DEFINITIONENVIRONMENTID = release.definitionEnvironmentId;
+                const RELEASE_ATTEMPTNUMBER = release.deploySteps.length; 
+                const path = `/${RELEASE_DEFINITIONID}/${RELEASE_RELEASEID}/${RELEASE_DEFINITIONENVIRONMENTID}/${RELEASE_ATTEMPTNUMBER}/`;
+        
+                this.setState({ nameEnvironment: nameEnvironment });
+
+                const client = getClient(GitRestClient);
+                let items = await client.getItems(REPOSITORY_NAME,project.id,path,VersionControlRecursionType.Full,true,true).then( items => {
+                    
+                    return items.filter(item => !item.isFolder).map(elem => {
+        
+                        let item:ItemReport = {
+                            url: elem.url,
+                            commitId: elem.latestProcessedChange.commitId,
+                            path: elem.path,
+                            comment: elem.latestProcessedChange.comment
+                        }
+        
+                        return item;
+                    });
+        
+                });
+        
+                for (let index = 0; index < items.length; index++) {
+                    items[index].content = await client.getItemText(REPOSITORY_NAME,items[index].path as string , project.id);
+                }
+
+                this.setState({ selectedTabId: items[0].commitId as string });
+                this.setState({ items: items });
+
+            }
+
+        } catch (err) {
+
+            console.error("Error : ", err);
+            this.setState({ message: " ¡ The report was not found !" });
+            
         }
     }
 
     public render(): JSX.Element {
 
-        const { selectedTabId, headerDescription, useCompactPivots, useLargeTitle, items , nameEnvironment} = this.state;
+        const { selectedTabId, headerDescription, useCompactPivots, useLargeTitle, items , nameEnvironment, message} = this.state;
         
-        if(items){
+        if(items && items.length > 0){
+
             const listItems = items.map((item) => <Tab name={item.comment} id={item.commitId as string}  key={item.commitId}/> );
 
             return (
@@ -124,7 +138,12 @@ class ReportContent extends React.Component<{}, IReportContentState> {
         }else{
 
             return ( 
-                <Page className="sample-hub flex-grow"> </Page>
+                <Page className="sample-hub flex-grow">
+                    <div className="page-content">
+                        <br/><br/>
+                        <Spinner className="page-content" size={SpinnerSize.large} label={message}/>
+                    </div>
+                </Page>
             );
         }
 
