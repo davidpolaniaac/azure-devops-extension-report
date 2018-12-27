@@ -3,7 +3,7 @@
     "id": "devops-extension-result-html",
     "publisher": "dpolania",
     "version": "1.0.240",
-    "name": "DevOps Result",
+    "name": "DevOps Result - Extension",
     "description": "Publish result in formate HTML",
     "categories": [
         "Azure Pipelines"
