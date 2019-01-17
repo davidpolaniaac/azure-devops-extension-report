@@ -221,9 +221,9 @@ class ReportContent extends React.Component<{}, IReportContentState> {
 
                 this.setState({ nameEnvironment: nameEnvironment });
 
-                let REPOSITORY_NAME = release.deployPhasesSnapshot.find(x => {
-                    return x.workflowTasks.find(y => y.taskId === idTask)
-                }).workflowTasks.find( x => x.taskId === idTask).inputs.nameRepository;
+                let REPOSITORY_NAME = release.deployPhasesSnapshot.find( (x: any) => {
+                    return x.workflowTasks.find((y: any) => y.taskId === idTask)
+                }).workflowTasks.find( (x: any) => x.taskId === idTask).inputs.nameRepository;
 
                 if(REPOSITORY_NAME){
 
