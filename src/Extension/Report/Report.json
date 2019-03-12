@@ -15,7 +15,9 @@
             "properties": {
                 "name": "Reports",
                 "uri": "dist/Report/Report.html",
-                "icon": "asset://static/sample-icon.png"
+                "icon": "asset://static/sample-icon.png",
+                "registeredObjectId": "registeredEnvironmentObject",
+                "dynamic": true
             }
         }
     ]
