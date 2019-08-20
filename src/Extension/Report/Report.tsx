@@ -44,6 +44,21 @@ class ReportContent extends React.Component<{}, IReportContentState> {
     public async componentDidMount() {
         await SDK.init();
         await SDK.ready();
+        await SDK.register("registeredEnvironmentObject",{
+            isInvisible: function (tabContext:any) {
+              // Hide report tab if there are no report tasklibrary in the release definition
+              if (tabContext && tabContext.releaseEnvironment && tabContext.releaseEnvironment.deployPhasesSnapshot) {
+                let phases = tabContext.releaseEnvironment.deployPhasesSnapshot;
+                let taskIds = [];
+                for (let phase of phases)
+                  for (let task of phase.workflowTasks)
+                    taskIds.push(task.taskId);
+                return taskIds.indexOf('13008e5e-9195-4043-9baf-c5d70da839e3') < 0;
+              }
+
+              return true;
+            }
+          });
         await this.initializeState();
     }
 
