@@ -1,9 +1,9 @@
 {
     "manifestVersion": 1,
-    "id": "devops-extension-result-html",
+    "id": "devops-extension-result-html-test",
     "publisher": "dpolania",
-    "version": "1.0.240",
-    "name": "DevOps Result - Extension",
+    "version": "1.0.253",
+    "name": "Result HTML",
     "description": "Publish result in formate HTML",
     "categories": [
         "Azure Pipelines"
@@ -16,7 +16,10 @@
     "icons": {
         "default": "logo.png"
     },
-    "scopes": ["vso.code_full"],
+    "scopes": [
+        "vso.code",
+        "vso.release"
+    ],
     "content": {
         "details": {
             "path": "overview.md"
